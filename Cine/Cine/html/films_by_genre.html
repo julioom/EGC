@@ -5,12 +5,10 @@
 <body>
 {% include 'header.html' %}
 <section>
-<h1>Three movies more like to {{film.movieTitle}} are:</h1>
-<l>
-{% for f in films %}
-<li>{{f.movieTitle}}</li>
+<h1>Movies for genre {{genre}}</h1>
+{% for m in peliculas %}
+<ul>Movie: {{m.movieTitle}} - Release Date: {{m.releaseDate}}</ul><br/>
 {% endfor %}
-</l>
 </section>
 </body>
 </html>
