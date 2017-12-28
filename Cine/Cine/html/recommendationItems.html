@@ -1,0 +1,17 @@
+<head>
+<title>Recommender System Movielens</title>
+</head>
+<body>
+{% include 'header.html' %}
+<h1>Recommended movies for the UserID: {{user.id}}</h1>
+{% if items %}
+{% for item in items %}
+<ul>
+<li>Title: {{item.movieTitle}}</li>
+</ul>
+{% endfor %}
+{% else %}
+<h2> Insufficient user data </h2>
+{% endif %}
+</body>
+</html>

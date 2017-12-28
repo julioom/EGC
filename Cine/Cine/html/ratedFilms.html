@@ -1,0 +1,14 @@
+<html>
+<head>
+<title>Recommender System Movielens</title>
+</head>
+<body>
+{% include 'header.html' %}
+<section>
+<h1>Movies and ratings for userid {{usuario.id}}</h1>
+{% for rating in usuario.rating_set.all %}
+<ul>Movie: {{rating.film.movieTitle}} - Rating: {{rating.rating}}</ul><br/>
+{% endfor %}
+</section>
+</body>
+</html>
