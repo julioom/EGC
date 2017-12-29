@@ -108,16 +108,28 @@ def crearPuntuaciones():
            datos,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter=",")
+    
+def crearGeneros():
+    e='adios'
+    l='hola'
+    palabra=[[l,e]]
+    datos = np.asarray(palabra)
+    np.savetxt(ruta+"genres.csv",   # Archivo de salida
+           datos,        # datos
+           fmt="%s",       # Usamos strings (%d para enteros)
+           delimiter=",")
 
 def crearCSV(request):
     crearPelis()
     crearUsuarios()
     crearPuntuaciones()
+    crearGeneros()
     return render_to_response('index.html')
     
 def searchByGenre(request):
     if request.method=='GET':
         form = GenreForm(request.GET, request.FILES)
+        peliculas=[]
         if form.is_valid():
             gen = form.cleaned_data['genre']
             genre = get_object_or_404(Genre, pk=gen) 
@@ -126,8 +138,7 @@ def searchByGenre(request):
                 query = QueryParser("genre", ix.schema).parse(unicode(genre))
                 results = searcher.search(query)
                 for r in results:
-                    print r
-                    peliculas=[]
+                    print r             
                     peliculas.append(r)
                     ##Buscar peliculas segun el Genero (Podria hacerse con Indices de Whoosh)
                     return render_to_response('films_by_genre.html', {'genre':genre},{'peliculas':peliculas})
@@ -140,13 +151,13 @@ def searchByUser(request):
         form = UserForm(request.GET, request.FILES)
         if form.is_valid():
             idUser = form.cleaned_data['id']
-            user = get_object_or_404(User, pk=idUser)
-            return render_to_response('ratedFilms.html', {'usuario':user})
+            usuario = get_object_or_404(User, pk=idUser)
+            return render_to_response('ratedFilms.html', {'usuario':usuario})
     else:
         form=UserForm()
     return render_to_response('search_user.html', {'form':form }, context_instance=RequestContext(request))
 
-# APARTADO B
+#Recomienda dos peliculas a un usuario que no haya puntuado
 def recommendedFilms(request):
     if request.method=='GET':
         form = UserForm(request.GET, request.FILES)
@@ -167,7 +178,7 @@ def recommendedFilms(request):
     form = UserForm()
     return render_to_response('search_user.html', {'form': form}, context_instance=RequestContext(request))
 
-# APARTADO C
+#Recomienda 3 peliculas similares a la dada
 def similarFilms(request):
     film = None
     if request.method=='GET':
@@ -181,6 +192,8 @@ def similarFilms(request):
             recommended = topMatches(ItemsPrefs, int(idFilm),n=3)
             items=[]
             for re in recommended:
+                print re
+                print re[1]
                 item = Film.objects.get(pk=int(re[1]))
                 items.append(item)
             return render_to_response('similarFilms.html', {'film': film,'films': items}, context_instance=RequestContext(request))
