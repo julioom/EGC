@@ -100,9 +100,9 @@ def populateRatings():
     
 def populateDatabase():
     populateGenres()
-    populateUsers()
-    populateFilms()
-    populateRatings()
+    #populateUsers()
+    #populateFilms()
+    #populateRatings()
     print("Finished database population")
     
 if __name__ == '__main__':

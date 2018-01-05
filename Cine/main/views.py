@@ -1,3 +1,6 @@
+# encoding: UTF-8
+
+
 import shelve
 from main.models import User, Film,Genre, Rating
 from main.forms import UserForm, GenreForm, FilmForm
@@ -8,8 +11,10 @@ from main.populate import populateDatabase
 from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT, KEYWORD
 from whoosh.qparser import QueryParser
+from bs4 import BeautifulSoup
 import tkMessageBox
 import os
+import urllib2
 import numpy as np #crear ficheros CSV
 
 dirindex = "Index_temas"
@@ -36,7 +41,7 @@ def get_schema_peliculas():
     return Schema(id=TEXT(stored=True), titulo=TEXT(stored=True), fecha_publicacion=TEXT(stored=True),
                   generos=KEYWORD(stored=True))#, puntuaciones=KEYWORD(stored=True))
     
-def extraer_datos():
+def extraer_datos(request):
     pass
     
 def crear_indices_peliculas():
@@ -66,7 +71,7 @@ def crear_indices_peliculas():
 # Create your views here.
 
 def index(request): 
-    crear_indices_peliculas()
+    #crear_indices_peliculas()
     return render_to_response('index.html')
 
 def populateDB(request):
@@ -102,7 +107,10 @@ def crearUsuarios():
 def crearPuntuaciones():
     e='adios'
     l='hola'
-    palabra=[[l,e]]
+    #palabra=[[l,e],[e,l]]
+    palabra =[]
+    palabra.append([l,e])
+    palabra.append([e,l])
     datos = np.asarray(palabra)
     np.savetxt(ruta+"ratings.csv",   # Archivo de salida
            datos,        # datos
@@ -110,19 +118,28 @@ def crearPuntuaciones():
            delimiter=",")
     
 def crearGeneros():
-    e='adios'
-    l='hola'
-    palabra=[[l,e]]
-    datos = np.asarray(palabra)
+    genres = []
+    pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/")
+    soup = BeautifulSoup(pagina, 'html.parser')
+    
+    columna = soup.find('div',class_='left_col_menu_item')
+
+    generos = columna.find_all('li')[1:]
+    for g in generos:
+        genero = g.text.split('(')[0]
+        gen =u' '.join(genero).encode('utf-8').strip()
+        genres.append([gen])
+    print len(genres)
+    datos = np.asarray(genres)
     np.savetxt(ruta+"genres.csv",   # Archivo de salida
            datos,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter=",")
 
 def crearCSV(request):
-    crearPelis()
-    crearUsuarios()
-    crearPuntuaciones()
+    #crearPelis()
+    #crearUsuarios()
+    #crearPuntuaciones()
     crearGeneros()
     return render_to_response('index.html')
     

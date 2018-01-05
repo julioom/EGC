@@ -21,13 +21,23 @@ def cargar_datos():
             genero = pelicula.find(class_='meta-body-item meta-body-info').find_all('a')
             
             #Recogida de Directores   DA ERRORES AQUI NO PILLA DOS DIRECTORES
-            directores = pelicula.find(class_='meta-body-item meta-body-direction light').find_all('a')
-            director = ""
-            print ( directores )
-            print ("/br")
-            for i in directores:
-                director = director + " , " + i.text
-                print(director + "/br")
+            #directores = pelicula.find(class_='meta-body-item meta-body-direction light').find_all('a')
+            directores = pelicula.find(class_='meta-body-item meta-body-direction light').text.strip()
+            x = directores.split("\n")
+            director=""
+            print(x[1])
+            '''if x[2] is not None:
+                print x[2]'''
+            '''for i in x:
+                print i+"31234465241\n"
+                y= i.split("\n")
+                
+                if len(y)==1:
+                    print y[0]
+                elif len(y)==2:
+                    print y'''
+                #director = i.text
+                #print(y)
             
             
             #Recogida de Reparto
@@ -57,7 +67,7 @@ def cargar_datos():
             
             
             datos.append((titulo, genero, director, reparto, synopsis,votos_usuarios, votos_medios, votos_sensacine ))
-            print (datos)
+            #print (datos)
             
 
        #pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/en-cartelera/cines/" + '?page=' + str(indice + 2))
@@ -65,8 +75,21 @@ def cargar_datos():
         
     return datos
 
+def cargar_generos():
+    datos = []
+    pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/")
+    soup = BeautifulSoup(pagina, 'html.parser')
+    
+    columna = soup.find('div',class_='left_col_menu_item')
+
+    generos = columna.find_all('li')[1:]
+    for g in generos:
+        genero = g.text.split()[0]
+        print genero
+        
 
 if __name__ == "__main__":
     cargar_datos()
+    #cargar_generos()
     
     
