@@ -1,6 +1,5 @@
 # encoding: UTF-8
 
-
 import shelve
 from main.models import User, Film,Genre, Rating
 from main.forms import UserForm, GenreForm, FilmForm
@@ -16,6 +15,7 @@ import tkMessageBox
 import os
 import urllib2
 import numpy as np #crear ficheros CSV
+import csv
 
 dirindex = "Index_temas"
 ruta="Cine//csv//"
@@ -41,11 +41,10 @@ def get_schema_peliculas():
     return Schema(id=TEXT(stored=True), titulo=TEXT(stored=True), fecha_publicacion=TEXT(stored=True),
                   generos=KEYWORD(stored=True))#, puntuaciones=KEYWORD(stored=True))
     
-def extraer_datos(request):
-    pass
+
     
 def crear_indices_peliculas():
-    datos = extraer_datos("http://mk2films.com/en/catalogues/international-en/")
+    datos = ""#extraer_datos("http://mk2films.com/en/catalogues/international-en/")
 
     if datos:  # Comprueba si contiene algo
         if not os.path.exists(dirindex):
@@ -84,14 +83,110 @@ def loadRS(request):
 
 #Crear CSV con Beautifulsoup
 def crearPelis():
-    e='adios'
-    l='hola'
-    palabra=[[l,e]]
-    datos = np.asarray(palabra)
-    np.savetxt(ruta+"films.csv",   # Archivo de salida
-           datos,        # datos
+    datos = []
+    links = []
+    
+    for indice in range(1):
+        pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/?page="+str(indice+1))
+        print "http://www.sensacine.com/peliculas/mejores/nota-espectadores/?page="+str(indice+1)
+        soup = BeautifulSoup(pagina, 'html.parser')
+        
+        link_pel="http://www.sensacine.com"
+        all_links = soup.find_all(class_='no_underline')
+        for l in all_links:
+            link = link_pel + l.get('href')
+            links.append(link)
+        
+    for e in links:
+        pagina = urllib2.urlopen(e)
+        print e
+        soup = BeautifulSoup(pagina, 'html.parser')
+        #Recogida de ID
+            
+        href = soup.find(class_='home item current').get('href').split('/')
+        id_compl = href[2].split('-')
+        ide = id_compl[1]
+                  
+        #Recogida de titulo
+        titulo = soup.find('div',class_='titlebar-title').text
+        u' '.join(titulo).encode('utf-8').strip()
+            
+        div= soup.find_all('div',class_='meta-body-item')
+            
+        #Comprobar si tiene fecha de re-estreno porque asi los divs son distintos
+        i=0
+        if soup.find(class_='meta-body-item').span.text == "Fecha de re-estreno":
+            i=1
+        #Recogida de fecha
+        fecha = div[0+i].find(class_='date').text
+                
+        #Recogida de Genero
+        list_gen = []
+        gene= ""
+        generos = div[3+i].find_all(class_='blue-link')
+        for g in generos:
+            gene+=g.text+","
+            list_gen.append(g.text)  
+        u' '.join(gene).encode('utf-8').strip()
+        
+        #Recogida de Directores   DA ERRORES AQUI NO PILLA DOS DIRECTORES
+        list_direc =[]
+        dire=""
+        directores = div[i+1].find_all(itemprop='director')
+        for d in directores:
+            dire+=d.text+","
+            list_direc.append(d.a.text)
+        u' '.join(dire).encode('utf-8').strip()   
+        #Recogida de Reparto
+        rep=""
+        reparto = div[2+i].find_all('span')
+        actores= reparto[1:len(reparto)-1]
+        for a in actores:
+            rep+=a.text+","
+                    
+        #rep+=" y más".encode('utf-8').strip()
+        u' '.join(rep).encode('utf-8').strip()  
+         
+        #Recogida de Synopsis
+        synopsis = soup.find(class_='synopsis-txt').text.strip()
+        u' '.join(synopsis).encode('utf-8').strip()
+        
+            #Recogida de votos
+        votos = soup.find_all(class_='rating-item')
+        votos_usuarios = ""
+        votos_medios = ""
+        votos_sensacine = ""
+        for voto in votos:
+            puntuacion =  voto.find(class_='rating-title').text.strip()
+            if puntuacion == "Usuarios":
+                votos_usuarios = voto.find(class_='stareval-note').text.strip()          
+                               
+            elif puntuacion == "Medios":
+                votos_medios = voto.find(class_='stareval-note').text.strip()
+                    
+            elif puntuacion == "Sensacine":
+                votos_sensacine = voto.find(class_='stareval-note').text.strip()
+                    
+    
+        #datos.append((ide,titulo, list_direc, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,list_gen ))
+        #datos.append((ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine ,list_direc))
+        print (ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine , gene)
+        print synopsis
+        row = str(ide+'|'+titulo+'|'+dire+'|'+rep+'|'+ synopsis+'|'+fecha+'|'+votos_usuarios+'|'+ votos_medios+'|'+ votos_sensacine+'|'+gene)
+        csvsalida = open(ruta+'films.csv', 'w')
+        salida = csv.writer(csvsalida)
+        salida.writerow(row)
+        del salida
+        csvsalida.close()
+    
+    print "---------------------------------------------------"
+    '''todo = np.asarray(datos)
+    np.savetxt(ruta+'films.csv',   # Archivo de salida
+           todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
-           delimiter=",")
+           delimiter="|")  
+    
+    '''
     
 
 def crearUsuarios():
@@ -137,10 +232,10 @@ def crearGeneros():
            delimiter=",")
 
 def crearCSV(request):
-    #crearPelis()
+    crearPelis()
     #crearUsuarios()
     #crearPuntuaciones()
-    crearGeneros()
+    #crearGeneros()
     return render_to_response('index.html')
     
 def searchByGenre(request):

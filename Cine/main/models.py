@@ -19,11 +19,13 @@ class User(models.Model):
     
         
 class Film(models.Model):
-    movieTitle = models.CharField(primary_key=True,max_length=1000)
+    idMovie = models.CharField(primary_key=True,max_length=10)
+    movieTitle = models.CharField(max_length=1000)
     director = models.CharField(max_length=20)
-    director = models.CharField(max_length=50)
+    reparto = models.CharField(max_length=50)
     synopsis = models.CharField(max_length=1000)
-    valorn_medios = models.DecimalField(max_digits=2,decimal_places=1)
+    releaseDate = models.DateField(null=True, blank=True)
+    valor_medios = models.DecimalField(max_digits=2,decimal_places=1)
     valor_usuarios = models.DecimalField(max_digits=2,decimal_places=1)
     valor_sensacine = models.DecimalField(max_digits=2,decimal_places=1)
     genres = models.ManyToManyField(Genre)
