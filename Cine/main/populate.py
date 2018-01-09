@@ -32,10 +32,8 @@ def populateUsers():
         data = line.split(',')
         if len(data) > 1:
             ide = data[0].strip()
-            ag = int(data[1].strip())
-            gen = data[2].strip()
-            loc = data[3].strip()
-            User.objects.create(idUser=ide, age=ag, gender=gen, localization=loc)   
+            nam = data[1].strip().enconde("utf-8")
+            User.objects.create(idUser=ide,name=nam)   
         line = fileobj.readline()
     fileobj.close()
     

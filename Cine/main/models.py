@@ -12,10 +12,9 @@ class Genre(models.Model):
         
 class User(models.Model):
     idUser = models.CharField(primary_key=True, max_length=20)
-    age = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
-    gender = models.CharField(max_length=1, choices=(('F', 'Female'), ('M', 'Male'),))
+    name = models.CharField(max_length=30)
     def __unicode__(self):
-        return unicode(self.gender + self.age)
+        return unicode(self.name)
     
         
 class Film(models.Model):

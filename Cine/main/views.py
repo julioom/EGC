@@ -82,6 +82,7 @@ def loadRS(request):
     return render_to_response('loadRS.html')
 
 #Crear CSV con Beautifulsoup
+        
 def crearPelis():
     datos = []
     links = []
@@ -122,29 +123,35 @@ def crearPelis():
                 
         #Recogida de Genero
         list_gen = []
+        lista=[]
         gene= ""
         generos = div[3+i].find_all(class_='blue-link')
         for g in generos:
-            gene+=g.text+","
-            list_gen.append(g.text)  
+            lista.append(g.text)
+            list_gen.append(g.text)
+        gene+=','.join(lista)
         u' '.join(gene).encode('utf-8').strip()
         
         #Recogida de Directores   DA ERRORES AQUI NO PILLA DOS DIRECTORES
         list_direc =[]
+        lista2 =[]
         dire=""
         directores = div[i+1].find_all(itemprop='director')
         for d in directores:
-            dire+=d.text+","
-            list_direc.append(d.a.text)
-        u' '.join(dire).encode('utf-8').strip()   
+            lista2.append(d.text.strip())
+            list_direc.append(d.a.text.strip())
+        dire+=','.join(lista2)
+        u' '.join(dire).encode('utf-8').strip() 
+          
         #Recogida de Reparto
         rep=""
+        list_act=[]
         reparto = div[2+i].find_all('span')
         actores= reparto[1:len(reparto)-1]
         for a in actores:
-            rep+=a.text+","
-                    
-        #rep+=" y más".encode('utf-8').strip()
+            #rep+=a.text+","
+            list_act.append(a.text)
+        rep+=",".join(list_act)
         u' '.join(rep).encode('utf-8').strip()  
          
         #Recogida de Synopsis
@@ -167,38 +174,58 @@ def crearPelis():
             elif puntuacion == "Sensacine":
                 votos_sensacine = voto.find(class_='stareval-note').text.strip()
                     
-    
-        #datos.append((ide,titulo, list_direc, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,list_gen ))
-        #datos.append((ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine ,list_direc))
-        print (ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine , gene)
-        print synopsis
-        row = str(ide+'|'+titulo+'|'+dire+'|'+rep+'|'+ synopsis+'|'+fecha+'|'+votos_usuarios+'|'+ votos_medios+'|'+ votos_sensacine+'|'+gene)
-        csvsalida = open(ruta+'films.csv', 'w')
-        salida = csv.writer(csvsalida)
-        salida.writerow(row)
-        del salida
-        csvsalida.close()
-    
+        #print (ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene )
+        row = '|'.join([ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
+        u' '.join(row).encode('utf-8').strip()
+        #datos.append([ide,titulo.encode('utf-8'), dire.encode('utf-8'), rep.encode('utf-8'), synopsis.encode('utf-8'),
+        #              fecha.encode('utf-8'),votos_usuarios, votos_medios, votos_sensacine,gene.encode('utf-8')])
+        datos.append([ide.encode('utf-8')])
+        
     print "---------------------------------------------------"
-    '''todo = np.asarray(datos)
-    np.savetxt(ruta+'films.csv',   # Archivo de salida
+    print datos
+    todo = np.asarray(datos)
+    np.savetxt(ruta+'films.csv', #ruta+"films.csv",   # Archivo de salida
            todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
-           delimiter="|")  
-    
-    '''
+           delimiter="|")
     
 
 def crearUsuarios():
-    e='adios'
-    l='hola'
-    palabra=[[l,e]]
-    datos = np.asarray(palabra)
-    np.savetxt(ruta+"users.csv",   # Archivo de salida
-           datos,        # datos
+    
+    fileobj=open(ruta+'films.csv', "r")
+    line=fileobj.readline()
+    ids_films=[]
+    while line:
+        ide = line.split('|')[0].strip().decode('utf-8', 'replace')
+        line=fileobj.readline()
+        ids_films.append(ide)
+    fileobj.close()
+    datos=[]
+    
+    for id_film in ids_films:
+        
+        print "http://www.sensacine.com/peliculas/pelicula-"+id_film+"/criticas-espectadores/"
+        pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/pelicula-"+id_film+"/criticas-espectadores/")
+        soup = BeautifulSoup(pagina, 'html.parser')
+        
+        todos_usuarios = soup.find_all(class_='row item hred')
+        for u in todos_usuarios:
+            ide = u.find(class_='item-profil')
+            if ide:
+                idee=ide.get('data-targetuserid').encode('utf-8')
+            nombre = u.find(itemprop='author')
+            if nombre:
+                nombree = nombre.text.encode('utf-8')
+            if [idee,nombree] not in datos:
+                datos.append([idee,nombree])
+    
+    print datos    
+    todo = np.asarray(datos)
+    np.savetxt(ruta+'users.csv',  # Archivo de salida
+           todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter=",")
-
+    
 def crearPuntuaciones():
     e='adios'
     l='hola'
@@ -232,8 +259,8 @@ def crearGeneros():
            delimiter=",")
 
 def crearCSV(request):
-    crearPelis()
-    #crearUsuarios()
+    #crearPelis()
+    crearUsuarios()
     #crearPuntuaciones()
     #crearGeneros()
     return render_to_response('index.html')
