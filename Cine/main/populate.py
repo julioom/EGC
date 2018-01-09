@@ -32,14 +32,13 @@ def populateUsers():
         data = line.split(',')
         if len(data) > 1:
             ide = data[0].strip()
-            nam = data[1].strip().enconde("utf-8")
+            nam = data[1].strip()#.encode("utf-8",'replace')
             User.objects.create(idUser=ide,name=nam)   
         line = fileobj.readline()
     fileobj.close()
     
     print("Users inserted: " + str(User.objects.count()))
     print("---------------------------------------------------------")
-
 
 @commit_on_success
 def populateFilms():
@@ -52,6 +51,7 @@ def populateFilms():
         data = line.split('|')
         if len(data) > 1:
             ide = int(data[0].strip())
+            Film.objects.create(idMovie=ide)
             tit = data[1].strip().decode('utf-8', 'replace')
             dir = data[2].strip().decode('utf-8', 'replace')
             rep = data[3].strip().decode('utf-8', 'replace')
@@ -108,8 +108,8 @@ def populateRatings():
     
 def populateDatabase():
     populateGenres()
-    # populateUsers()
-    # populateFilms()
+    populateUsers()
+    populateFilms()
     # populateRatings()
     print("Finished database population")
     

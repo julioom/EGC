@@ -27,8 +27,8 @@ def loadDict():
     shelf = shelve.open("dataRS.dat")
     ratings = Rating.objects.all()
     for ra in ratings:
-        user = int(ra.user.id)
-        itemid = int(ra.film.id)
+        user = ra.user.id
+        itemid = ra.film.id
         rating = float(ra.rating)
         Prefs.setdefault(user, {})
         Prefs[user][itemid] = rating
@@ -307,7 +307,7 @@ def recommendedFilms(request):
             Prefs = shelf['Prefs']
             SimItems = shelf['SimItems']
             shelf.close()
-            rankings = getRecommendedItems(Prefs, SimItems, int(idUser))
+            rankings = getRecommendedItems(Prefs, SimItems, idUser)
             recommended = rankings[:2]
             items = []
             for re in recommended:
@@ -328,12 +328,12 @@ def similarFilms(request):
             shelf = shelve.open("dataRS.dat")
             ItemsPrefs = shelf['ItemsPrefs']
             shelf.close()
-            recommended = topMatches(ItemsPrefs, int(idFilm),n=3)
+            recommended = topMatches(ItemsPrefs, idFilm,n=3)
             items=[]
             for re in recommended:
                 print re
                 print re[1]
-                item = Film.objects.get(pk=int(re[1]))
+                item = Film.objects.get(pk=re[1])
                 items.append(item)
             return render_to_response('similarFilms.html', {'film': film,'films': items}, context_instance=RequestContext(request))
     form = FilmForm()

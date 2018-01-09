@@ -18,15 +18,15 @@ class User(models.Model):
     
         
 class Film(models.Model):
-    idMovie = models.CharField(primary_key=True,max_length=10)
+    idMovie = models.BigIntegerField(primary_key=True)
     movieTitle = models.CharField(max_length=1000)
     director = models.CharField(max_length=20)
     reparto = models.CharField(max_length=50)
     synopsis = models.CharField(max_length=1000)
     releaseDate = models.DateField(null=True, blank=True)
-    valor_medios = models.DecimalField(max_digits=2,decimal_places=1)
-    valor_usuarios = models.DecimalField(max_digits=2,decimal_places=1)
-    valor_sensacine = models.DecimalField(max_digits=2,decimal_places=1)
+    valor_medios = models.DecimalField(max_digits=2,decimal_places=1,null=True)
+    valor_usuarios = models.DecimalField(max_digits=2,decimal_places=1,null=True)
+    valor_sensacine = models.DecimalField(max_digits=2,decimal_places=1,null=True)
     genres = models.ManyToManyField(Genre)
     ratings = models.ManyToManyField(User, through='Rating')
     def __unicode__(self):
