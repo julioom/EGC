@@ -13,6 +13,7 @@ def populateGenres():
     line = fileobj.readline()
     while line:  # Cada linea es un genero
         gen = line.decode('utf-8', 'replace')
+        print gen
         Genre.objects.create(genreName=gen)
         line = fileobj.readline()
     fileobj.close()
@@ -51,27 +52,31 @@ def populateFilms():
         data = line.split('|')
         if len(data) > 1:
             ide = int(data[0].strip())
-            Film.objects.create(idMovie=ide)
             tit = data[1].strip().decode('utf-8', 'replace')
             dir = data[2].strip().decode('utf-8', 'replace')
             rep = data[3].strip().decode('utf-8', 'replace')
             sin = data[4].strip().decode('utf-8', 'replace')
-            med = int(data[6].strip())
-            usu = int(data[7].strip())
-            sen = int(data[8].strip())
-            try:
-                date_rel = datetime.strptime(data[4].strip(), '%d-%b-%Y')
-            except:
-                date_rel = datetime.strptime('01-Jan-1900', '%d-%b-%Y')
+            med = None
+            if data[6].strip():
+                med= float(data[6].strip().replace(',','.'))
+            usu = float(data[7].strip().replace(',','.'))
+            sen = None
+            if data[8].strip():
+                sen= float(data[8].strip().replace(',','.'))
+            date_rel = data[5].strip().decode('utf-8')
             list_genres = []
             if data[9].strip() != None:
-                generos=data[9].split(',').strip()
+                generos=data[9].split(',')
                 for g in generos:
-                    list_genres.append(g)
+                    list_genres.append(g.strip())
             film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel, valor_medios=med, valor_usuarios=usu,
                                 valor_sensacine=sen) 
             for c in list_genres:
-                film.genres.add(Genre.objects.get(genreName=c))
+                c+="\n"
+                print c
+                a = Genre.objects.get(genreName=c)
+                print a
+                film.genres.add(a)
                 
         line = fileobj.readline()
     fileobj.close()
@@ -89,12 +94,13 @@ def populateRatings():
     line = fileobj.readline()
     i = 0
     while line:
-        data = line.split(',')
+        data = line.split('|')
         if len(data) > 1:
-            use = User.objects.get(id=data[0].strip())
-            fil = Film.objects.get(id=data[1].strip())
-            dat = datetime.fromtimestamp(int(data[2].strip()))   
-            rat = int(data[3].strip())
+            use = User.objects.get(idUser=data[0].strip())
+            fil = Film.objects.get(idMovie=int(data[1].strip()))
+            fecha = data[2].strip().split('/')
+            dat = datetime.datetime(fecha[2], fecha[1], fecha[0])   
+            rat = float(data[3].strip())
             Rating.objects.create(user=use, film=fil, rateDate=dat, rating=rat)
             i = i + 1
             if i % 10000 == 0:
@@ -108,9 +114,9 @@ def populateRatings():
     
 def populateDatabase():
     populateGenres()
-    populateUsers()
+    #populateUsers()
     populateFilms()
-    # populateRatings()
+    #populateRatings()
     print("Finished database population")
     
 if __name__ == '__main__':

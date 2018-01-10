@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# encoding= utf8
 
 import urllib2
 from bs4 import BeautifulSoup
@@ -89,8 +89,14 @@ def cargar_generos():
 
     generos = columna.find_all('li')[1:]
     for g in generos:
-        genero = g.text.split()[0]
-        print genero
+        genero = g.text.split('(')[0].encode('utf-8')
+        datos.append(genero)
+    
+    todo = np.asarray(datos)
+    np.savetxt('C:\\Users\\JULIO\\eclipse-workspace\\prueba beauty\\csv\\genres.csv',   # Archivo de salida
+           todo,        # datos
+           fmt="%s",       # Usamos strings (%d para enteros)
+           delimiter=",")
         
 def obtener_peliculas():
     datos = []
@@ -106,21 +112,22 @@ def obtener_peliculas():
         for l in all_links:
             link = link_pel + l.get('href')
             links.append(link)
-        
+            
     for e in links:
         pagina = urllib2.urlopen(e)
         print e
         soup = BeautifulSoup(pagina, 'html.parser')
-        #Recogida de ID
-            
+        
+        #Recogida de ID    
         href = soup.find(class_='home item current').get('href').split('/')
         id_compl = href[2].split('-')
-        ide = id_compl[1]
+        ide = id_compl[1].encode('utf-8')
                   
         #Recogida de titulo
-        titulo = soup.find('div',class_='titlebar-title').text
-        u' '.join(titulo).encode('utf-8').strip()
-            
+        titulo = soup.find('div',class_='titlebar-title').text.encode('utf-8')
+        print titulo
+        #u' '.join(titulo).encode('utf-8').strip()
+           
         div= soup.find_all('div',class_='meta-body-item')
             
         #Comprobar si tiene fecha de re-estreno porque asi los divs son distintos
@@ -128,7 +135,7 @@ def obtener_peliculas():
         if soup.find(class_='meta-body-item').span.text == "Fecha de re-estreno":
             i=1
         #Recogida de fecha
-        fecha = div[0+i].find(class_='date').text
+        fecha = div[0+i].find(class_='date').text.encode('utf-8')
                 
         #Recogida de Genero
         list_gen = []
@@ -138,10 +145,11 @@ def obtener_peliculas():
         for g in generos:
             lista.append(g.text)
             list_gen.append(g.text)
-        gene+=','.join(lista)
-        u' '.join(gene).encode('utf-8').strip()
+        gene+=','.join(lista).encode('utf-8')
+      
+        #u' '.join(gene).encode('utf-8').strip()
         
-        #Recogida de Directores   DA ERRORES AQUI NO PILLA DOS DIRECTORES
+        #Recogida de Directores
         list_direc =[]
         lista2 =[]
         dire=""
@@ -149,8 +157,7 @@ def obtener_peliculas():
         for d in directores:
             lista2.append(d.text.strip())
             list_direc.append(d.a.text.strip())
-        dire+=','.join(lista2)
-        u' '.join(dire).encode('utf-8').strip() 
+        dire+=','.join(lista2).encode('utf-8')
           
         #Recogida de Reparto
         rep=""
@@ -160,12 +167,10 @@ def obtener_peliculas():
         for a in actores:
             #rep+=a.text+","
             list_act.append(a.text)
-        rep+=",".join(list_act)
-        u' '.join(rep).encode('utf-8').strip()  
+        rep+=",".join(list_act).encode('utf-8') 
          
         #Recogida de Synopsis
-        synopsis = soup.find(class_='synopsis-txt').text.strip()
-        u' '.join(synopsis).encode('utf-8').strip()
+        synopsis = soup.find(class_='synopsis-txt').text.strip().encode('utf-8')
         
             #Recogida de votos
         votos = soup.find_all(class_='rating-item')
@@ -175,20 +180,15 @@ def obtener_peliculas():
         for voto in votos:
             puntuacion =  voto.find(class_='rating-title').text.strip()
             if puntuacion == "Usuarios":
-                votos_usuarios = voto.find(class_='stareval-note').text.strip()          
+                votos_usuarios = voto.find(class_='stareval-note').text.strip().encode('utf-8')          
                                
             elif puntuacion == "Medios":
-                votos_medios = voto.find(class_='stareval-note').text.strip()
+                votos_medios = voto.find(class_='stareval-note').text.strip().encode('utf-8')
                     
             elif puntuacion == "Sensacine":
-                votos_sensacine = voto.find(class_='stareval-note').text.strip()
+                votos_sensacine = voto.find(class_='stareval-note').text.strip().encode('utf-8')
                     
-        #print (ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene )
-        row = '|'.join([ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
-        u' '.join(row).encode('utf-8').strip()
-        #datos.append([ide,titulo.encode('utf-8'), dire.encode('utf-8'), rep.encode('utf-8'), synopsis.encode('utf-8'),
-        #              fecha.encode('utf-8'),votos_usuarios, votos_medios, votos_sensacine,gene.encode('utf-8')])
-        datos.append([ide.encode('utf-8')])
+        datos.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
         
     print "---------------------------------------------------"
     print datos
@@ -203,35 +203,52 @@ def obtener_usuarios():
     fileobj=open('C:\\Users\\JULIO\\eclipse-workspace\\prueba beauty\\csv\\films.csv', "r")
     line=fileobj.readline()
     ids_films=[]
+    usuarios=[]
+    puntuaciones=[]
     while line:
+        
         ide = line.split('|')[0].strip().decode('utf-8', 'replace')
+        if ide.isdigit():
+            ids_films.append(ide)
         line=fileobj.readline()
-        ids_films.append(ide)
     fileobj.close()
     
     for id_film in ids_films:
-    
         pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/pelicula-"+id_film+"/criticas-espectadores/")
         soup = BeautifulSoup(pagina, 'html.parser')
-        datos=[]
         
         todos_usuarios = soup.find_all(class_='row item hred')
         for u in todos_usuarios:
-            id = u.find(class_='item-profil').get('data-targetuserid').encode('utf-8')
-            nombre = u.find(itemprop='author').text.encode('utf-8')
-            datos.append([id,nombre])
-            print datos
+            ide = u.find(class_='item-profil')
+            if ide:
+                idee=ide.get('data-targetuserid').encode('utf-8')
+            nombre = u.find(itemprop='author')
+            if nombre:
+                nombree = nombre.text.encode('utf-8')
+            if [idee,nombree] not in usuarios:
+                usuarios.append([idee,nombree])
+                
+            valor = u.find(itemprop="ratingValue").text.strip()
+            fecha = u.find(class_='review-about light').text.strip().split()[2]
+            
+            puntuaciones.append([idee,id_film,fecha,valor])
         
-    todo = np.asarray(datos)
+    todo = np.asarray(usuarios)
     np.savetxt('C:\\Users\\JULIO\\eclipse-workspace\\prueba beauty\\csv\\users.csv', #ruta+"films.csv",   # Archivo de salida
            todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter=",")
     
+    todo2 = np.asarray(puntuaciones)
+    np.savetxt('C:\\Users\\JULIO\\eclipse-workspace\\prueba beauty\\csv\\ratings.csv', #ruta+"films.csv",   # Archivo de salida
+           todo2,        # datos
+           fmt="%s",       # Usamos strings (%d para enteros)
+           delimiter="|")
+    
     
 if __name__ == "__main__":
     #obtener_usuarios()
-    obtener_peliculas()
-    #cargar_generos()
+    #obtener_peliculas()
+    cargar_generos()
     
     

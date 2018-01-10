@@ -15,7 +15,6 @@ import tkMessageBox
 import os
 import urllib2
 import numpy as np #crear ficheros CSV
-import csv
 
 dirindex = "Index_temas"
 ruta="Cine//csv//"
@@ -38,13 +37,15 @@ def loadDict():
     shelf.close()
     
 def get_schema_peliculas():
-    return Schema(id=TEXT(stored=True), titulo=TEXT(stored=True), fecha_publicacion=TEXT(stored=True),
+    return Schema(id=TEXT(stored=True), titulo=TEXT(stored=True), director=TEXT(stored=True),
+                  reparto=TEXT(stored=True),sinopsis=TEXT(stored=True),fecha_estreno=TEXT(stored=False),
+                  medios=TEXT(stored=False),usuarios=TEXT(stored=False),sensacine=TEXT(stored=False),
                   generos=KEYWORD(stored=True))#, puntuaciones=KEYWORD(stored=True))
     
 
     
 def crear_indices_peliculas():
-    datos = ""#extraer_datos("http://mk2films.com/en/catalogues/international-en/")
+    datos = crearPelis()
 
     if datos:  # Comprueba si contiene algo
         if not os.path.exists(dirindex):
@@ -58,9 +59,9 @@ def crear_indices_peliculas():
 
     peliculas_i = 0
     for dato in datos:
-        i,tit,fec,gen,pun=dato
-        writer.add_document(id=i, titulo=tit, fecha_publicacion=fec,
-                            generos=gen, puntuaciones=pun)
+        ide,tit,dir,rep,sin,fecha,med,usu,sen,gen, puntuaciones=dato
+        writer.add_document(id=ide, titulo=tit, director=dir,reparto=rep,sinopsis=sin,fecha_estreno=fecha,
+                            medios=med,usuarios=usu,sensacine=sen,generos=gen)#, puntuaciones=pun)
         peliculas_i += 1
 
     writer.commit()
@@ -97,21 +98,22 @@ def crearPelis():
         for l in all_links:
             link = link_pel + l.get('href')
             links.append(link)
-        
+            
     for e in links:
         pagina = urllib2.urlopen(e)
         print e
         soup = BeautifulSoup(pagina, 'html.parser')
-        #Recogida de ID
-            
+        
+        #Recogida de ID    
         href = soup.find(class_='home item current').get('href').split('/')
         id_compl = href[2].split('-')
-        ide = id_compl[1]
+        ide = id_compl[1].encode('utf-8')
                   
         #Recogida de titulo
-        titulo = soup.find('div',class_='titlebar-title').text
-        u' '.join(titulo).encode('utf-8').strip()
-            
+        titulo = soup.find('div',class_='titlebar-title').text.encode('utf-8')
+        print titulo
+        #u' '.join(titulo).encode('utf-8').strip()
+           
         div= soup.find_all('div',class_='meta-body-item')
             
         #Comprobar si tiene fecha de re-estreno porque asi los divs son distintos
@@ -119,7 +121,7 @@ def crearPelis():
         if soup.find(class_='meta-body-item').span.text == "Fecha de re-estreno":
             i=1
         #Recogida de fecha
-        fecha = div[0+i].find(class_='date').text
+        fecha = div[0+i].find(class_='date').text.encode('utf-8')
                 
         #Recogida de Genero
         list_gen = []
@@ -129,10 +131,11 @@ def crearPelis():
         for g in generos:
             lista.append(g.text)
             list_gen.append(g.text)
-        gene+=','.join(lista)
-        u' '.join(gene).encode('utf-8').strip()
+        gene+=','.join(lista).encode('utf-8')
+      
+        #u' '.join(gene).encode('utf-8').strip()
         
-        #Recogida de Directores   DA ERRORES AQUI NO PILLA DOS DIRECTORES
+        #Recogida de Directores
         list_direc =[]
         lista2 =[]
         dire=""
@@ -140,8 +143,7 @@ def crearPelis():
         for d in directores:
             lista2.append(d.text.strip())
             list_direc.append(d.a.text.strip())
-        dire+=','.join(lista2)
-        u' '.join(dire).encode('utf-8').strip() 
+        dire+=','.join(lista2).encode('utf-8')
           
         #Recogida de Reparto
         rep=""
@@ -151,12 +153,10 @@ def crearPelis():
         for a in actores:
             #rep+=a.text+","
             list_act.append(a.text)
-        rep+=",".join(list_act)
-        u' '.join(rep).encode('utf-8').strip()  
+        rep+=",".join(list_act).encode('utf-8') 
          
         #Recogida de Synopsis
-        synopsis = soup.find(class_='synopsis-txt').text.strip()
-        u' '.join(synopsis).encode('utf-8').strip()
+        synopsis = soup.find(class_='synopsis-txt').text.strip().encode('utf-8')
         
             #Recogida de votos
         votos = soup.find_all(class_='rating-item')
@@ -166,20 +166,15 @@ def crearPelis():
         for voto in votos:
             puntuacion =  voto.find(class_='rating-title').text.strip()
             if puntuacion == "Usuarios":
-                votos_usuarios = voto.find(class_='stareval-note').text.strip()          
+                votos_usuarios = voto.find(class_='stareval-note').text.strip().encode('utf-8')          
                                
             elif puntuacion == "Medios":
-                votos_medios = voto.find(class_='stareval-note').text.strip()
+                votos_medios = voto.find(class_='stareval-note').text.strip().encode('utf-8')
                     
             elif puntuacion == "Sensacine":
-                votos_sensacine = voto.find(class_='stareval-note').text.strip()
+                votos_sensacine = voto.find(class_='stareval-note').text.strip().encode('utf-8')
                     
-        #print (ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene )
-        row = '|'.join([ide,titulo, dire, rep, synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
-        u' '.join(row).encode('utf-8').strip()
-        #datos.append([ide,titulo.encode('utf-8'), dire.encode('utf-8'), rep.encode('utf-8'), synopsis.encode('utf-8'),
-        #              fecha.encode('utf-8'),votos_usuarios, votos_medios, votos_sensacine,gene.encode('utf-8')])
-        datos.append([ide.encode('utf-8')])
+        datos.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
         
     print "---------------------------------------------------"
     print datos
@@ -189,22 +184,25 @@ def crearPelis():
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter="|")
     
+    return datos
+    
 
 def crearUsuarios():
     
-    fileobj=open(ruta+'films.csv', "r")
+    fileobj=open('C:\\Users\\JULIO\\eclipse-workspace\\prueba beauty\\csv\\films.csv', "r")
     line=fileobj.readline()
     ids_films=[]
+    usuarios=[]
+    puntuaciones=[]
     while line:
+        
         ide = line.split('|')[0].strip().decode('utf-8', 'replace')
+        if ide.isdigit():
+            ids_films.append(ide)
         line=fileobj.readline()
-        ids_films.append(ide)
     fileobj.close()
-    datos=[]
     
     for id_film in ids_films:
-        
-        print "http://www.sensacine.com/peliculas/pelicula-"+id_film+"/criticas-espectadores/"
         pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/pelicula-"+id_film+"/criticas-espectadores/")
         soup = BeautifulSoup(pagina, 'html.parser')
         
@@ -216,31 +214,29 @@ def crearUsuarios():
             nombre = u.find(itemprop='author')
             if nombre:
                 nombree = nombre.text.encode('utf-8')
-            if [idee,nombree] not in datos:
-                datos.append([idee,nombree])
-    
-    print datos    
-    todo = np.asarray(datos)
-    np.savetxt(ruta+'users.csv',  # Archivo de salida
+            if [idee,nombree] not in usuarios:
+                usuarios.append([idee,nombree])
+                
+            valor = u.find(itemprop="ratingValue").text.strip()
+            fecha = u.find(class_='review-about light').text.strip().split()[2]
+            
+            puntuaciones.append([idee,id_film,fecha,valor])
+        
+    todo = np.asarray(usuarios)
+    np.savetxt(ruta+'users.csv', #ruta+"films.csv",   # Archivo de salida
            todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter=",")
     
-def crearPuntuaciones():
-    e='adios'
-    l='hola'
-    #palabra=[[l,e],[e,l]]
-    palabra =[]
-    palabra.append([l,e])
-    palabra.append([e,l])
-    datos = np.asarray(palabra)
-    np.savetxt(ruta+"ratings.csv",   # Archivo de salida
-           datos,        # datos
+    todo2 = np.asarray(puntuaciones)
+    np.savetxt(ruta+'ratings.csv', #ruta+"films.csv",   # Archivo de salida
+           todo2,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
-           delimiter=",")
+           delimiter="|")
+
     
 def crearGeneros():
-    genres = []
+    datos = []
     pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/")
     soup = BeautifulSoup(pagina, 'html.parser')
     
@@ -248,24 +244,24 @@ def crearGeneros():
 
     generos = columna.find_all('li')[1:]
     for g in generos:
-        genero = g.text.split('(')[0]
-        gen =u' '.join(genero).encode('utf-8').strip()
-        genres.append([gen])
-    print len(genres)
-    datos = np.asarray(genres)
+        genero = g.text.split('(')[0].encode('utf-8')
+        datos.append(genero)
+        
+    todo = np.asarray(datos)
     np.savetxt(ruta+"genres.csv",   # Archivo de salida
-           datos,        # datos
+           todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter=",")
 
 def crearCSV(request):
     #crearPelis()
-    crearUsuarios()
-    #crearPuntuaciones()
-    #crearGeneros()
+    #crear_indices_peliculas()
+    #crearUsuarios()
+    crearGeneros()
+    
     return render_to_response('index.html')
     
-def searchByGenre(request):
+def searchByGenre(request): #con whoosh
     if request.method=='GET':
         form = GenreForm(request.GET, request.FILES)
         peliculas=[]
@@ -284,6 +280,19 @@ def searchByGenre(request):
     else:
         form=GenreForm()
     return render_to_response('search_genre.html', {'form':form }, context_instance=RequestContext(request))
+
+def peliculas_por_genero(request): #con django
+    peliculas = []
+    if request.method=='GET':
+        form = GenreForm(request.GET, request.FILES)
+        if form.is_valid():
+            nombre = form.cleaned_data['genre']
+            genre = get_object_or_404(Genre, pk=nombre)
+            item = Film.objects.get(genres=genre)
+            peliculas.append(item)
+            return render_to_response('films_by_genre.html', {'genre': genre,'peliculas': peliculas}, context_instance=RequestContext(request))
+    form = GenreForm()
+    return render_to_response('search_genre.html', {'form': form}, context_instance=RequestContext(request))
 
 def searchByUser(request):
     if request.method=='GET':
@@ -338,4 +347,6 @@ def similarFilms(request):
             return render_to_response('similarFilms.html', {'film': film,'films': items}, context_instance=RequestContext(request))
     form = FilmForm()
     return render_to_response('search_film.html', {'form': form}, context_instance=RequestContext(request))
+
+
 
