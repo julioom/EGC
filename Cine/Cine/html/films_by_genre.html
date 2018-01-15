@@ -6,12 +6,9 @@
 {% include 'header.html' %}
 <section>
 <h1>Movies for genre {{genre}}</h1>
-{% for m in peliculas %}
+{% for m in titulos %}
 <ul><strong>Movie: </strong> {{m.titulo}}</ul>
 <ul><strong>Director: </strong> {{m.director}}</ul><br/>
-{% if m.url %}
-<iframe width="560" height="315" src="{{m.url}}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-{% endif %}
 {% endfor %}
 </section>
 </body>

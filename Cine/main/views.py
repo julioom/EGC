@@ -37,7 +37,7 @@ def loadDict():
     
 def get_schema_peliculas():
     return Schema(id=TEXT(stored=True), titulo=TEXT(stored=True), director=TEXT(stored=True),
-                  reparto=TEXT(stored=True),sinopsis=TEXT(stored=True),url = TEXT(stored=True),fecha_estreno=TEXT(stored=True),
+                  reparto=TEXT(stored=True),sinopsis=TEXT(stored=True),fecha_estreno=TEXT(stored=True),
                   medios=TEXT(stored=False),usuarios=TEXT(stored=False),sensacine=TEXT(stored=False),
                   generos=KEYWORD(stored=True))
     
@@ -58,7 +58,7 @@ def crear_indices_peliculas():
 
     peliculas_i = 0
     for dato in datos:
-        ide,tit,dir,rep,sin,fecha,enlace,med,usu,sen,gen=dato
+        ide,tit,dir,rep,sin,fecha,med,usu,sen,gen=dato
         list_generos=[]
         gene = gen.split(',')
         for g in gene:
@@ -66,8 +66,7 @@ def crear_indices_peliculas():
             list_generos.append(genero)
         print sin
         writer.add_document(id=ide.decode('utf-8'), titulo=tit.decode('utf-8'), director=dir.decode('utf-8'),reparto=rep.decode('utf-8'),
-                            sinopsis=sin.decode('utf-8'),fecha_estreno=fecha.decode('utf-8'),
-                            url = enlace.decode('utf-8'),medios=med.decode('utf-8'),
+                            sinopsis=sin.decode('utf-8'),fecha_estreno=fecha.decode('utf-8'),medios=med.decode('utf-8'),
                             usuarios=usu.decode('utf-8'),sensacine=sen.decode('utf-8'),generos=list_generos)#, puntuaciones=pun)
         peliculas_i += 1
 
@@ -108,6 +107,7 @@ def crearPelis():
             
     for e in links:
         pagina = urllib2.urlopen(e)
+        print e
         soup = BeautifulSoup(pagina, 'html.parser')
         
         #Recogida de ID    
@@ -118,19 +118,7 @@ def crearPelis():
         #Recogida de titulo
         titulo = soup.find('div',class_='titlebar-title').text.encode('utf-8')
         #u' '.join(titulo).encode('utf-8').strip()
-        
-        #trailer
-        href = soup.find(class_="trailer item").get("href")
-        enlace = "http://www.sensacine.com"+href
-        pagina2 = urllib2.urlopen(enlace)
-        soup2 = BeautifulSoup(pagina2, 'html.parser')
-        todo= soup2.find(id="player-export").get("data-model")
-        partes = todo.split('"')
-        url = partes[7].replace("\\","")
-        print url
-        url.encode('utf-8')
-        print url
-         
+           
         div= soup.find_all('div',class_='meta-body-item')
             
         #Comprobar si tiene fecha de re-estreno porque asi los divs son distintos
@@ -195,8 +183,8 @@ def crearPelis():
                 votos_sensacine = voto.find(class_='stareval-note').text.strip().encode('utf-8')
                     
         #datos.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])        
-        datos.append([ide,titulo,dire,rep,"",fecha,url,votos_usuarios, votos_medios, votos_sensacine,gene])
-        completo.append([ide,titulo,dire,rep,synopsis,fecha,url,votos_usuarios, votos_medios, votos_sensacine,gene])
+        datos.append([ide,titulo,dire,rep,"",fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
+        completo.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
          
     print "---------------------------------------------------"
     todo = np.asarray(datos)
@@ -276,17 +264,17 @@ def crearGeneros():
            delimiter=",")
 
 def crearCSV(request):
-    crearPelis()
-    #crear_indices_peliculas()
-    #crearUsuarios()
-    #crearGeneros()
+    #crearPelis()
+    crear_indices_peliculas()
+    crearUsuarios()
+    crearGeneros()
     
     return render_to_response('index.html')
     
 def searchByGenre(request): #con whoosh
     if request.method=='GET':
         form = GenreForm(request.GET, request.FILES)
-        peliculas=[]
+        titulos=[]
         if form.is_valid():
             genre = form.cleaned_data['genre']
             ix = open_dir(dirindex)
@@ -295,8 +283,8 @@ def searchByGenre(request): #con whoosh
                 results = searcher.search(query)
                 print results
                 for r in results:
-                    peliculas.append(r)
-                return render_to_response('films_by_genre.html', {'genre':genre,'peliculas':peliculas})
+                    titulos.append(r)
+                return render_to_response('films_by_genre.html', {'genre':genre,'titulos':titulos})
     else:
         form=GenreForm()
     return render_to_response('search_genre.html', {'form':form }, context_instance=RequestContext(request))
@@ -329,7 +317,7 @@ def peliculas_por_genero(request): #con django
             genre = get_object_or_404(Genre, pk=nombre)
             for f in Film.objects.filter(genres=genre):
                 peliculas.append(f)
-            #url="//s3.vid.web.acsta.net/ES/nmedia/35/18/68/09/14/19425076_sd_013.mp4"
+            
             return render_to_response('films_by_genre.html', {'genre': genre,'peliculas': peliculas}, context_instance=RequestContext(request))
     form = GenreForm()
     return render_to_response('search_genre.html', {'form': form}, context_instance=RequestContext(request))
