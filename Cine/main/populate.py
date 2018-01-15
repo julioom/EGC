@@ -56,20 +56,21 @@ def populateFilms():
             dir = data[2].strip().decode('utf-8', 'replace')
             rep = data[3].strip().decode('utf-8', 'replace')
             sin = data[4].strip().decode('utf-8', 'replace')
-            med = None
-            if data[6].strip():
-                med= float(data[6].strip().replace(',','.'))
-            usu = float(data[7].strip().replace(',','.'))
-            sen = None
-            if data[8].strip():
-                sen= float(data[8].strip().replace(',','.'))
             date_rel = data[5].strip().decode('utf-8')
+            enlace = data[6].strip().decode('utf-8', 'replace')
+            med = None
+            if data[7].strip():
+                med= float(data[7].strip().replace(',','.'))
+            usu = float(data[8].strip().replace(',','.'))
+            sen = None
+            if data[9].strip():
+                sen= float(data[9].strip().replace(',','.'))
             list_genres = []
-            if data[9].strip() != None:
-                generos=data[9].split(',')
+            if data[10].strip() != None:
+                generos=data[10].split(',')
                 for g in generos:
                     list_genres.append(g.strip())
-            film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel, valor_medios=med, valor_usuarios=usu,
+            film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel,url=enlace, valor_medios=med, valor_usuarios=usu,
                                 valor_sensacine=sen) 
             for c in list_genres:
                 a = Genre.objects.get(genreName=c)
