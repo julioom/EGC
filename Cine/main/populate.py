@@ -12,7 +12,7 @@ def populateGenres():
     fileobj = open(path + "\\genres.csv", "r")
     line = fileobj.readline()
     while line:  # Cada linea es un genero
-        gen = line.split('\n')[0].strip().decode('utf-8', 'replace')
+        gen = line.decode('utf-8', 'replace')
         print gen
         Genre.objects.create(genreName=gen)
         line = fileobj.readline()
@@ -72,7 +72,10 @@ def populateFilms():
             film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel, valor_medios=med, valor_usuarios=usu,
                                 valor_sensacine=sen) 
             for c in list_genres:
+                c+="\n"
+                print c
                 a = Genre.objects.get(genreName=c)
+                print a
                 film.genres.add(a)
                 
         line = fileobj.readline()
@@ -96,9 +99,8 @@ def populateRatings():
             use = User.objects.get(idUser=data[0].strip())
             fil = Film.objects.get(idMovie=int(data[1].strip()))
             fecha = data[2].strip().split('/')
-            dat = datetime(int(fecha[2]), int(fecha[1]), int(fecha[0]))
-            if data[3].strip():
-                rat= float(data[3].strip().replace(',','.'))
+            dat = datetime.datetime(fecha[2], fecha[1], fecha[0])   
+            rat = float(data[3].strip())
             Rating.objects.create(user=use, film=fil, rateDate=dat, rating=rat)
             i = i + 1
             if i % 10000 == 0:
@@ -112,9 +114,9 @@ def populateRatings():
     
 def populateDatabase():
     populateGenres()
-    populateUsers()
+    #populateUsers()
     populateFilms()
-    populateRatings()
+    #populateRatings()
     print("Finished database population")
     
 if __name__ == '__main__':

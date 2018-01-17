@@ -6,9 +6,14 @@
 {% include 'header.html' %}
 <section>
 <h1>Movies for genre {{genre}}</h1>
+<<<<<<< Updated upstream
 {% for m in titulos %}
 <ul><strong>Movie: </strong> {{m.titulo}}</ul>
 <ul><strong>Director: </strong> {{m.director}}</ul><br/>
+=======
+{% for m in peliculas %}
+<ul>Movie: {{m.movieTitle}} - Release Date: {{m.releaseDate}}</ul><br/>
+>>>>>>> Stashed changes
 {% endfor %}
 </section>
 </body>
