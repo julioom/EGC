@@ -1,20 +1,12 @@
-<html>
-<head>
-<title>RS Cine Project</title>
-</head>
 <body>
 {% include 'header.html' %}
 <section>
 <h1>Movies for genre {{genre}}</h1>
-<<<<<<< Updated upstream
-{% for m in titulos %}
-<ul><strong>Movie: </strong> {{m.titulo}}</ul>
-<ul><strong>Director: </strong> {{m.director}}</ul><br/>
-=======
 {% for m in peliculas %}
-<ul>Movie: {{m.movieTitle}} - Release Date: {{m.releaseDate}}</ul><br/>
->>>>>>> Stashed changes
+</br>
+<ul><strong>Movie: </strong> {{m.movieTitle}}</ul>
+<ul><strong>Director: </strong> {{m.director}}</ul><br/>
+<iframe width="560" height="315" src="{{m.url}}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 {% endfor %}
 </section>
 </body>
-</html>

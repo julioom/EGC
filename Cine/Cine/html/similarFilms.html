@@ -1,16 +1,16 @@
-<html>
-<head>
-<title>RS Cine Project</title>
-</head>
 <body>
 {% include 'header.html' %}
 <section>
 <h1>Three movies more like to {{film.movieTitle}} are:</h1>
 <l>
 {% for f in films %}
+</br>
+<ul>
 <li>{{f.movieTitle}}</li>
+<li>{{f.director}}</li>
+<li>{{f.reparto}}</li>
+</ul>
 {% endfor %}
 </l>
 </section>
 </body>
-</html>

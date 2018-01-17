@@ -7,13 +7,11 @@ path = "Cine\\csv"
 @commit_on_success
 def populateGenres():
     print("Loading Movie Genres...")
-    Genre.objects.all().delete()
     
     fileobj = open(path + "\\genres.csv", "r")
     line = fileobj.readline()
     while line:  # Cada linea es un genero
-        gen = line.decode('utf-8', 'replace')
-        print gen
+        gen = line.split('\n')[0].strip().decode('utf-8', 'replace')
         Genre.objects.create(genreName=gen)
         line = fileobj.readline()
     fileobj.close()
@@ -25,7 +23,6 @@ def populateGenres():
 @commit_on_success
 def populateUsers():
     print("Loading users...")
-    User.objects.all().delete()
     
     fileobj = open(path + "\\users.csv", "r")
     line = fileobj.readline()
@@ -33,8 +30,12 @@ def populateUsers():
         data = line.split(',')
         if len(data) > 1:
             ide = data[0].strip()
-            nam = data[1].strip()#.encode("utf-8",'replace')
-            User.objects.create(idUser=ide,name=nam)   
+            nam = data[1].strip()
+            usuario = User.objects.filter(idUser=ide)
+            if usuario:
+                pass
+            else:
+                User.objects.create(idUser=ide,name=nam)   
         line = fileobj.readline()
     fileobj.close()
     
@@ -44,7 +45,6 @@ def populateUsers():
 @commit_on_success
 def populateFilms():
     print("Loading movies...")
-    Film.objects.all().delete()
     
     fileobj = open(path + "\\films.csv", "r")
     line = fileobj.readline()
@@ -56,26 +56,26 @@ def populateFilms():
             dir = data[2].strip().decode('utf-8', 'replace')
             rep = data[3].strip().decode('utf-8', 'replace')
             sin = data[4].strip().decode('utf-8', 'replace')
-            med = None
-            if data[6].strip():
-                med= float(data[6].strip().replace(',','.'))
-            usu = float(data[7].strip().replace(',','.'))
-            sen = None
-            if data[8].strip():
-                sen= float(data[8].strip().replace(',','.'))
             date_rel = data[5].strip().decode('utf-8')
+            enlace = data[6].strip().decode('utf-8', 'replace')
+            med = None
+            if data[7].strip():
+                med= float(data[7].strip().replace(',','.'))
+                usu = None
+            if data[8].strip():
+                usu= float(data[8].strip().replace(',','.'))
+            sen = None
+            if data[9].strip():
+                sen= float(data[9].strip().replace(',','.'))
             list_genres = []
-            if data[9].strip() != None:
-                generos=data[9].split(',')
+            if data[10].strip() != None:
+                generos=data[10].split(',')
                 for g in generos:
                     list_genres.append(g.strip())
-            film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel, valor_medios=med, valor_usuarios=usu,
+            film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel,url=enlace, valor_medios=med, valor_usuarios=usu,
                                 valor_sensacine=sen) 
             for c in list_genres:
-                c+="\n"
-                print c
                 a = Genre.objects.get(genreName=c)
-                print a
                 film.genres.add(a)
                 
         line = fileobj.readline()
@@ -88,7 +88,6 @@ def populateFilms():
 @commit_on_success
 def populateRatings():
     print("Loading ratings...")
-    Rating.objects.all().delete()
 
     fileobj = open(path + "\\ratings.csv", "r")  # rb
     line = fileobj.readline()
@@ -99,8 +98,9 @@ def populateRatings():
             use = User.objects.get(idUser=data[0].strip())
             fil = Film.objects.get(idMovie=int(data[1].strip()))
             fecha = data[2].strip().split('/')
-            dat = datetime.datetime(fecha[2], fecha[1], fecha[0])   
-            rat = float(data[3].strip())
+            dat = datetime(int(fecha[2]), int(fecha[1]), int(fecha[0]))
+            if data[3].strip():
+                rat= float(data[3].strip().replace(',','.'))
             Rating.objects.create(user=use, film=fil, rateDate=dat, rating=rat)
             i = i + 1
             if i % 10000 == 0:
@@ -113,10 +113,17 @@ def populateRatings():
     
     
 def populateDatabase():
+    Rating.objects.all().delete()
+    Film.objects.all().delete()
+    usuarios = User.objects.all()
+    for u in usuarios:
+        u.delete()
+    Genre.objects.all().delete()
     populateGenres()
-    #populateUsers()
+    populateUsers()
     populateFilms()
-    #populateRatings()
+    populateRatings()
+     
     print("Finished database population")
     
 if __name__ == '__main__':

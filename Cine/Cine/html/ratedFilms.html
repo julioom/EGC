@@ -1,14 +1,10 @@
-<html>
-<head>
-<title>RS Cine Project</title>
-</head>
 <body>
 {% include 'header.html' %}
 <section>
-<h1>Movies and ratings for userid {{usuario.id}}</h1>
+<h1>Movies and ratings for name {{usuario.name}}</h1>
 {% for rating in usuario.rating_set.all %}
+</br>
 <ul>Movie: {{rating.film.movieTitle}} - Rating: {{rating.rating}}</ul><br/>
 {% endfor %}
 </section>
 </body>
-</html>

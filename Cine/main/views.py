@@ -2,7 +2,7 @@
 
 import shelve
 from main.models import User, Film,Genre, Rating
-from main.forms import UserForm, GenreForm, FilmForm
+from main.forms import UserForm, GenreForm, FilmForm, SynopsisForm, RSFilmForm
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from main.recommendations import  transformPrefs, calculateSimilarItems, getRecommendedItems, topMatches
@@ -11,23 +11,22 @@ from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT, KEYWORD
 from whoosh.qparser import QueryParser
 from bs4 import BeautifulSoup
-import tkMessageBox
 import os
 import urllib2
 import numpy as np #crear ficheros CSV
 
 dirindex = "Index_temas"
-ruta="Cine//csv//"
+ruta="Cine\\csv\\"
 Prefs={}   # matriz de usuarios y puntuaciones a cada a items
 ItemsPrefs={}   # matriz de items y puntuaciones de cada usuario. Inversa de Prefs
 SimItems=[]  # matriz de similitudes entre los items
 
 def loadDict():
-    shelf = shelve.open("dataRS.dat")
+    shelf = shelve.open("Cine\\dataRS.dat")
     ratings = Rating.objects.all()
     for ra in ratings:
-        user = ra.user.id
-        itemid = ra.film.id
+        user = ra.user.idUser
+        itemid = ra.film.idMovie
         rating = float(ra.rating)
         Prefs.setdefault(user, {})
         Prefs[user][itemid] = rating
@@ -37,14 +36,10 @@ def loadDict():
     shelf.close()
     
 def get_schema_peliculas():
-    return Schema(id=TEXT(stored=True), titulo=TEXT(stored=True), director=TEXT(stored=True),
-<<<<<<< Updated upstream
-                  reparto=TEXT(stored=True),sinopsis=TEXT(stored=True),fecha_estreno=TEXT(stored=True),
-=======
-                  reparto=TEXT(stored=True),sinopsis=TEXT(stored=True),fecha_estreno=TEXT(stored=False),
->>>>>>> Stashed changes
+    return Schema(id=TEXT(stored=True), movieTitle=TEXT(stored=True), director=TEXT(stored=True),
+                  reparto=TEXT(stored=True),sinopsis=TEXT(stored=True),url = TEXT(stored=True),fecha_estreno=TEXT(stored=True),
                   medios=TEXT(stored=False),usuarios=TEXT(stored=False),sensacine=TEXT(stored=False),
-                  generos=KEYWORD(stored=True))#, puntuaciones=KEYWORD(stored=True))
+                  generos=KEYWORD(stored=True))
     
 
     
@@ -63,27 +58,21 @@ def crear_indices_peliculas():
 
     peliculas_i = 0
     for dato in datos:
-<<<<<<< Updated upstream
-        ide,tit,dir,rep,sin,fecha,med,usu,sen,gen=dato
+        ide,tit,dir,rep,sin,fecha,enlace,med,usu,sen,gen=dato
         list_generos=[]
         gene = gen.split(',')
         for g in gene:
             genero=g.decode('utf-8')
             list_generos.append(genero)
-        print sin
-        writer.add_document(id=ide.decode('utf-8'), titulo=tit.decode('utf-8'), director=dir.decode('utf-8'),reparto=rep.decode('utf-8'),
-                            sinopsis=sin.decode('utf-8'),fecha_estreno=fecha.decode('utf-8'),medios=med.decode('utf-8'),
+        writer.add_document(id=ide.decode('utf-8'), movieTitle=tit.decode('utf-8'), director=dir.decode('utf-8'),reparto=rep.decode('utf-8'),
+                            sinopsis=sin.decode('utf-8'),fecha_estreno=fecha.decode('utf-8'),
+                            url = enlace.decode('utf-8'),medios=med.decode('utf-8'),
                             usuarios=usu.decode('utf-8'),sensacine=sen.decode('utf-8'),generos=list_generos)#, puntuaciones=pun)
-=======
-        ide,tit,dir,rep,sin,fecha,med,usu,sen,gen, puntuaciones=dato
-        writer.add_document(id=ide, titulo=tit, director=dir,reparto=rep,sinopsis=sin,fecha_estreno=fecha,
-                            medios=med,usuarios=usu,sensacine=sen,generos=gen)#, puntuaciones=pun)
->>>>>>> Stashed changes
         peliculas_i += 1
 
     writer.commit()
 
-    tkMessageBox.showinfo("Indexar", "Se han indexado {} Peliculas".format(peliculas_i))
+    print ("Indexar", "Se han indexado {} Peliculas".format(peliculas_i))
     
 # Create your views here.
 
@@ -104,10 +93,10 @@ def loadRS(request):
 def crearPelis():
     datos = []
     links = []
+    completo = []
     
-    for indice in range(1):
+    for indice in range(12):
         pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/?page="+str(indice+1))
-        print "http://www.sensacine.com/peliculas/mejores/nota-espectadores/?page="+str(indice+1)
         soup = BeautifulSoup(pagina, 'html.parser')
         
         link_pel="http://www.sensacine.com"
@@ -118,8 +107,8 @@ def crearPelis():
             
     for e in links:
         pagina = urllib2.urlopen(e)
-        print e
         soup = BeautifulSoup(pagina, 'html.parser')
+        print e
         
         #Recogida de ID    
         href = soup.find(class_='home item current').get('href').split('/')
@@ -128,9 +117,24 @@ def crearPelis():
                   
         #Recogida de titulo
         titulo = soup.find('div',class_='titlebar-title').text.encode('utf-8')
-        print titulo
         #u' '.join(titulo).encode('utf-8').strip()
-           
+        
+        #trailer
+        href = soup.find(class_="trailer item")
+        url= "No se ha encontrado trailer"
+        if href:
+            href=href.get("href")
+            enlace = "http://www.sensacine.com"+href
+            pagina2 = urllib2.urlopen(enlace)
+            soup2 = BeautifulSoup(pagina2, 'html.parser')
+            todo= soup2.find(id="player-export")
+            if todo:
+                todo=todo.get("data-model")
+                partes = todo.split('"')
+                url = partes[7].encode('utf-8')
+                url = url.replace("\\","")
+        #url = "//s3.vid.web.acsta.net/ES/nmedia/35/18/68/09/14/19425076_sd_013.mp4"
+        
         div= soup.find_all('div',class_='meta-body-item')
             
         #Comprobar si tiene fecha de re-estreno porque asi los divs son distintos
@@ -138,8 +142,12 @@ def crearPelis():
         if soup.find(class_='meta-body-item').span.text == "Fecha de re-estreno":
             i=1
         #Recogida de fecha
-        fecha = div[0+i].find(class_='date').text.encode('utf-8')
-                
+        fecha = div[0+i].find(class_='date')
+        if fecha:
+            fecha=fecha.text.encode('utf-8')
+        else:
+            fecha=""
+            
         #Recogida de Genero
         list_gen = []
         lista=[]
@@ -158,8 +166,10 @@ def crearPelis():
         dire=""
         directores = div[i+1].find_all(itemprop='director')
         for d in directores:
-            lista2.append(d.text.strip())
-            list_direc.append(d.a.text.strip())
+            texto = d.text.replace(',',' ').strip().split('\n')
+            for t in texto:
+                lista2.append(t)
+            
         dire+=','.join(lista2).encode('utf-8')
           
         #Recogida de Reparto
@@ -191,29 +201,23 @@ def crearPelis():
             elif puntuacion == "Sensacine":
                 votos_sensacine = voto.find(class_='stareval-note').text.strip().encode('utf-8')
                     
-<<<<<<< Updated upstream
         #datos.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])        
-        datos.append([ide,titulo,dire,rep,"",fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
-        completo.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
+        datos.append([ide,titulo,dire,rep,"",fecha,url,votos_usuarios, votos_medios, votos_sensacine,gene])
+        completo.append([ide,titulo,dire,rep,synopsis,fecha,url,votos_usuarios, votos_medios, votos_sensacine,gene])
          
-=======
-        datos.append([ide,titulo,dire,rep,synopsis,fecha,votos_usuarios, votos_medios, votos_sensacine,gene])
-        
->>>>>>> Stashed changes
     print "---------------------------------------------------"
-    print datos
     todo = np.asarray(datos)
     np.savetxt(ruta+'films.csv', #ruta+"films.csv",   # Archivo de salida
            todo,        # datos
            fmt="%s",       # Usamos strings (%d para enteros)
            delimiter="|")
     
-    return datos
+    return completo
     
 
 def crearUsuarios():
     
-    fileobj=open('C:\\Users\\JULIO\\eclipse-workspace\\prueba beauty\\csv\\films.csv', "r")
+    fileobj=open(ruta+'films.csv', "r")
     line=fileobj.readline()
     ids_films=[]
     usuarios=[]
@@ -241,8 +245,16 @@ def crearUsuarios():
             if [idee,nombree] not in usuarios:
                 usuarios.append([idee,nombree])
                 
-            valor = u.find(itemprop="ratingValue").text.strip()
-            fecha = u.find(class_='review-about light').text.strip().split()[2]
+            valor = u.find(itemprop="ratingValue")
+            if valor:
+                valor=valor.text.strip()
+            else:
+                valor = ""
+            fecha = u.find(class_='review-about light')
+            if fecha:
+                fecha=fecha.text.strip().split()[2]
+            else:
+                fecha=""
             
             puntuaciones.append([idee,id_film,fecha,valor])
         
@@ -264,11 +276,12 @@ def crearGeneros():
     pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/")
     soup = BeautifulSoup(pagina, 'html.parser')
     
-    columna = soup.find('div',class_='left_col_menu_item')
+    columna = soup.find('div',class_='left_col_menu_item')  
 
     generos = columna.find_all('li')[1:]
     for g in generos:
-        genero = g.text.split('(')[0].encode('utf-8')
+        genero = g.text.split('(')[0].strip().encode('utf-8')
+        print genero
         datos.append(genero)
         
     todo = np.asarray(datos)
@@ -279,13 +292,8 @@ def crearGeneros():
 
 def crearCSV(request):
     #crearPelis()
-<<<<<<< Updated upstream
     crear_indices_peliculas()
     crearUsuarios()
-=======
-    #crear_indices_peliculas()
-    #crearUsuarios()
->>>>>>> Stashed changes
     crearGeneros()
     
     return render_to_response('index.html')
@@ -293,27 +301,37 @@ def crearCSV(request):
 def searchByGenre(request): #con whoosh
     if request.method=='GET':
         form = GenreForm(request.GET, request.FILES)
-        titulos=[]
+        peliculas=[]
         if form.is_valid():
-            gen = form.cleaned_data['genre']
-            genre = get_object_or_404(Genre, pk=gen) 
+            genre = form.cleaned_data['genre']
             ix = open_dir(dirindex)
             with ix.searcher() as searcher:
-                query = QueryParser("genre", ix.schema).parse(unicode(genre))
+                query = QueryParser("generos", ix.schema).parse(unicode(genre))
                 results = searcher.search(query)
+                print results
                 for r in results:
-<<<<<<< Updated upstream
-                    titulos.append(r)
-                return render_to_response('films_by_genre.html', {'genre':genre,'titulos':titulos})
-=======
-                    print r             
                     peliculas.append(r)
-                    ##Buscar peliculas segun el Genero (Podria hacerse con Indices de Whoosh)
-                    return render_to_response('films_by_genre.html', {'genre':genre},{'peliculas':peliculas})
->>>>>>> Stashed changes
+                return render_to_response('films_by_genre.html', {'genre':genre,'peliculas':peliculas})
     else:
         form=GenreForm()
     return render_to_response('search_genre.html', {'form':form }, context_instance=RequestContext(request))
+
+def searchBySynopsis(request): #con whoosh
+    if request.method=='GET':
+        form = SynopsisForm(request.GET, request.FILES)
+        movies=[]
+        if form.is_valid():
+            word = form.cleaned_data['word'] 
+            ix = open_dir(dirindex)
+            with ix.searcher() as searcher:
+                query = QueryParser("sinopsis", ix.schema).parse(unicode(word))
+                results = searcher.search(query)
+                for r in results:
+                    movies.append(r)
+                return render_to_response('films_by_synopsis.html', {'word':word,'movies':movies})
+    else:
+        form=SynopsisForm()
+    return render_to_response('search_synopsis.html', {'form':form }, context_instance=RequestContext(request))
 
 def peliculas_por_genero(request): #con django
     peliculas = []
@@ -322,14 +340,10 @@ def peliculas_por_genero(request): #con django
         if form.is_valid():
             nombre = form.cleaned_data['genre']
             genre = get_object_or_404(Genre, pk=nombre)
-<<<<<<< Updated upstream
             for f in Film.objects.filter(genres=genre):
                 peliculas.append(f)
-            
-=======
-            item = Film.objects.get(genres=genre)
-            peliculas.append(item)
->>>>>>> Stashed changes
+            #url="//s3.vid.web.acsta.net/ES/nmedia/35/18/68/09/14/19425076_sd_013.mp4"
+            print peliculas
             return render_to_response('films_by_genre.html', {'genre': genre,'peliculas': peliculas}, context_instance=RequestContext(request))
     form = GenreForm()
     return render_to_response('search_genre.html', {'form': form}, context_instance=RequestContext(request))
@@ -338,8 +352,9 @@ def searchByUser(request):
     if request.method=='GET':
         form = UserForm(request.GET, request.FILES)
         if form.is_valid():
-            idUser = form.cleaned_data['id']
-            usuario = get_object_or_404(User, pk=idUser)
+            nombre = form.cleaned_data['name']
+            usuario = get_object_or_404(User, name=nombre)
+            print usuario
             return render_to_response('ratedFilms.html', {'usuario':usuario})
     else:
         form=UserForm()
@@ -348,21 +363,71 @@ def searchByUser(request):
 #Recomienda dos peliculas a un usuario que no haya puntuado
 def recommendedFilms(request):
     if request.method=='GET':
+        form = RSFilmForm(request.GET, request.FILES)
+        if form.is_valid():
+            nombre = form.cleaned_data['name']
+            peli = Film.objects.get(movieTitle=nombre)
+            generos=[]
+            #recorrer generos de la pelicula para buscar otra con los mismos
+            for g in peli.genres.all():
+                generos.append(g)
+            pelis = Film.objects.filter(genres=generos[0])
+            pelis1 = pelis.filter(genres=generos[1])
+            items = list(pelis1)
+            
+            return render_to_response('recommendationItemsByFilm.html', {'peli': peli, 'items': items}, context_instance=RequestContext(request))
+    form = RSFilmForm()
+    return render_to_response('search_user.html', {'form': form}, context_instance=RequestContext(request))
+
+def recommendedFilms2(request):
+    if request.method=='GET':
         form = UserForm(request.GET, request.FILES)
         if form.is_valid():
-            idUser = form.cleaned_data['id']
-            user = get_object_or_404(User, pk=idUser)
-            shelf = shelve.open("dataRS.dat")
-            Prefs = shelf['Prefs']
-            SimItems = shelf['SimItems']
-            shelf.close()
-            rankings = getRecommendedItems(Prefs, SimItems, idUser)
-            recommended = rankings[:2]
-            items = []
-            for re in recommended:
-                item = Film.objects.get(pk=re[1])
-                items.append(item)
-            return render_to_response('recommendationItems.html', {'user': user, 'items': items}, context_instance=RequestContext(request))
+            nombre = form.cleaned_data['name']
+            generos = Genre.objects.all()
+            diccionario = {}
+            for g in generos:
+                diccionario[g]=0
+            usuario = User.objects.get(name=nombre)
+            id = usuario.idUser
+            puntuaciones = Rating.objects.filter(user=usuario)
+            peliculas=[]
+            for p in puntuaciones:
+                pelicula= Film.objects.get(movieTitle=p.film)
+                peliculas.append(pelicula)
+                generos_p = pelicula.genres.all()
+                #intentar recorrer los generos de la pelicula
+                for ge in generos_p:
+                    diccionario[ge]+=1
+            #ordenar de menor a mayor
+            l = diccionario.items()
+            l.sort(key=lambda x: x[1])
+            #coger los dos generos del diccionario que mas valor tengan
+            tamano = len(l)
+            lista = l[tamano-2:]
+            g1=lista[0][0]
+            g2=lista[1][0]
+            lista=[g1.genreName,g2.genreName]
+            pelis = Film.objects.filter(genres=g1)
+            pelis1 = pelis.filter(genres=g2)
+            items =list(pelis1)
+            for pe in peliculas:
+                if pe in items:
+                    items.remove(pe)
+            synopsis=[]
+            final=[]
+            for i in items:
+                ix = open_dir(dirindex)
+                with ix.searcher() as searcher:
+                    query = QueryParser("sinopsis", ix.schema).parse(unicode(i.movieTitle))
+                    results = searcher.search(query)
+                    for r in results:
+                        synopsis.append(r['sinopsis'].encode('utf-8'))
+                        print synopsis
+            for i in range(len(items)-1):
+                final.append("Title: "+items[i].movieTitle+" -----   Synopsis: "+synopsis[i].decode('utf-8'))
+            return render_to_response('recommendationItemsByUser.html', {'user': usuario, 'final': final}, context_instance=RequestContext(request))
+    
     form = UserForm()
     return render_to_response('search_user.html', {'form': form}, context_instance=RequestContext(request))
 
@@ -372,17 +437,15 @@ def similarFilms(request):
     if request.method=='GET':
         form = FilmForm(request.GET, request.FILES)
         if form.is_valid():
-            idFilm = form.cleaned_data['id']
-            film = get_object_or_404(Film, pk=idFilm)
-            shelf = shelve.open("dataRS.dat")
+            idFilm = int(form.cleaned_data['id'])
+            film = get_object_or_404(Film, idMovie=idFilm)
+            shelf = shelve.open("Cine\\dataRS.dat")
             ItemsPrefs = shelf['ItemsPrefs']
             shelf.close()
             recommended = topMatches(ItemsPrefs, idFilm,n=3)
             items=[]
             for re in recommended:
-                print re
-                print re[1]
-                item = Film.objects.get(pk=re[1])
+                item = Film.objects.get(idMovie=re[1])
                 items.append(item)
             return render_to_response('similarFilms.html', {'film': film,'films': items}, context_instance=RequestContext(request))
     form = FilmForm()

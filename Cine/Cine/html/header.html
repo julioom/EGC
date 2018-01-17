@@ -1,15 +1,27 @@
+{% load static %}
+<html>
+<head>
+<title>RS Cine Project</title>
+<!-- <link rel="stylesheet" href='{% static "css/cabecera.css" %}'> -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+</head>
+<body>
 <header>
-<nav>
+<nav id="lista">
 	<ul>
 		<li><a href="/">Home</a></li>
-		<li><a href="/crearCSV">Create files</a></li>
+		<li><a href="/crearCSVandIndex">Create files and index</a></li>
 		<li><a href="/populate">Populate database</a></li>
 		<li><a href="/loadRS">Load Recommender System data</a></li>
 		<li><a href="/searchGenreWhoosh">Search movies rated by a genre (Whoosh)</a></li>
 		<li><a href="/searchGenreDjango">Search movies rated by a genre (Django)</a></li>
-		<li><a href="/searchUser">Search movies rated by a user</a></li>
-		<li><a href="/recommendedFilms">Recommend two movies to a user</a></li>
-		<li><a href="/similarFilms">Three films more like other</a></li>
+		<li><a href="/searchSynopsis">Search movies by synopsis (Whoosh)</a></li>
+		<li><a href="/searchUser">Search movies rated by a user (Django)</a></li>
+		<li><a href="/recommendedFilmsByFilm">Recommend movies with the same genres (Django)</a></li>
+		<li><a href="/recommendedFilmsByUser">Recommend movies to a user (Django)</a></li>
+		<li><a href="/similarFilms">Three films more like other (Django)</a></li>
 	</ul>
 </nav>
 </header>
+</body>
+</html>

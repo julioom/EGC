@@ -1,0 +1,15 @@
+<body>
+{% include 'header.html' %}
+<h1>Similar movies for the Film: {{film}}</h1>
+{% if items %}
+{% for i in items %}
+</br>
+<ul>
+<li>Title: {{i.movieTitle}}</li>
+<li>Director: {{i.director}}</li>
+</ul>
+{% endfor %}
+{% else %}
+<h2> Insufficient user data </h2>
+{% endif %}
+</body>

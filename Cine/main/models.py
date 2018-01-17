@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from pattern.db import primary_key
 
 
@@ -24,6 +23,7 @@ class Film(models.Model):
     reparto = models.CharField(max_length=50)
     synopsis = models.CharField(max_length=1000)
     releaseDate = models.CharField(null=True, blank=True,max_length=30)
+    url = models.URLField(verify_exists=True,max_length=200)
     valor_medios = models.DecimalField(max_digits=2,decimal_places=1,null=True)
     valor_usuarios = models.DecimalField(max_digits=2,decimal_places=1,null=True)
     valor_sensacine = models.DecimalField(max_digits=2,decimal_places=1,null=True)
@@ -38,4 +38,4 @@ class Rating(models.Model):
     rateDate = models.DateField(null=True, blank=True)
     rating = models.DecimalField(max_digits=2,decimal_places=1,null=True)
     def __unicode__(self):
-        return unicode(self.user+self.film+self.rating) 
+        return unicode(self.user) 
