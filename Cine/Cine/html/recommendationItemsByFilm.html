@@ -1,5 +1,6 @@
 <body>
 {% include 'header.html' %}
+<div class="div">
 <h1>Similar movies for the Film: {{film}}</h1>
 {% if items %}
 {% for i in items %}
@@ -12,4 +13,5 @@
 {% else %}
 <h2> Insufficient user data </h2>
 {% endif %}
+</div>
 </body>

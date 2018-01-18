@@ -75,8 +75,7 @@ def populateFilms():
             film = Film.objects.create(idMovie= ide,movieTitle=tit, director=dir, reparto=rep, synopsis=sin, releaseDate=date_rel,url=enlace, valor_medios=med, valor_usuarios=usu,
                                 valor_sensacine=sen) 
             for c in list_genres:
-                a = Genre.objects.get(genreName=c)
-                film.genres.add(a)
+                film.genres.add(Genre.objects.get(genreName=c))
                 
         line = fileobj.readline()
     fileobj.close()
@@ -96,6 +95,7 @@ def populateRatings():
         data = line.split('|')
         if len(data) > 1:
             use = User.objects.get(idUser=data[0].strip())
+            print data[1].strip()
             fil = Film.objects.get(idMovie=int(data[1].strip()))
             fecha = data[2].strip().split('/')
             dat = datetime(int(fecha[2]), int(fecha[1]), int(fecha[0]))

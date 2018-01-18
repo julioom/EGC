@@ -1,5 +1,6 @@
 <body>
 {% include 'header.html' %}
+<div class="div">
 <h1>Recommended movies for the User: {{user}}</h1>
 {% if final %}
 {% for i in final %}
@@ -11,4 +12,5 @@
 {% else %}
 <h2> Insufficient user data </h2>
 {% endif %}
+</div>
 </body>

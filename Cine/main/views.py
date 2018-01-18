@@ -78,15 +78,15 @@ def crear_indices_peliculas():
 
 def index(request): 
     #crear_indices_peliculas()
-    return render_to_response('index.html')
+    return render_to_response('index.html', context_instance=RequestContext(request))
 
 def populateDB(request):
     populateDatabase() 
-    return render_to_response('populate.html')
+    return render_to_response('populate.html',context_instance=RequestContext(request))
 
 def loadRS(request):
     loadDict()
-    return render_to_response('loadRS.html')
+    return render_to_response('loadRS.html',context_instance=RequestContext(request))
 
 #Crear CSV con Beautifulsoup
         
@@ -95,7 +95,7 @@ def crearPelis():
     links = []
     completo = []
     
-    for indice in range(12):
+    for indice in range(11):
         pagina = urllib2.urlopen("http://www.sensacine.com/peliculas/mejores/nota-espectadores/?page="+str(indice+1))
         soup = BeautifulSoup(pagina, 'html.parser')
         
@@ -291,7 +291,6 @@ def crearGeneros():
            delimiter=",")
 
 def crearCSV(request):
-    #crearPelis()
     crear_indices_peliculas()
     crearUsuarios()
     crearGeneros()
@@ -311,7 +310,7 @@ def searchByGenre(request): #con whoosh
                 print results
                 for r in results:
                     peliculas.append(r)
-                return render_to_response('films_by_genre.html', {'genre':genre,'peliculas':peliculas})
+                return render_to_response('films_by_genre.html', {'genre':genre,'peliculas':peliculas},context_instance=RequestContext(request))
     else:
         form=GenreForm()
     return render_to_response('search_genre.html', {'form':form }, context_instance=RequestContext(request))
@@ -328,7 +327,7 @@ def searchBySynopsis(request): #con whoosh
                 results = searcher.search(query)
                 for r in results:
                     movies.append(r)
-                return render_to_response('films_by_synopsis.html', {'word':word,'movies':movies})
+                return render_to_response('films_by_synopsis.html', {'word':word,'movies':movies},context_instance=RequestContext(request))
     else:
         form=SynopsisForm()
     return render_to_response('search_synopsis.html', {'form':form }, context_instance=RequestContext(request))
@@ -355,7 +354,7 @@ def searchByUser(request):
             nombre = form.cleaned_data['name']
             usuario = get_object_or_404(User, name=nombre)
             print usuario
-            return render_to_response('ratedFilms.html', {'usuario':usuario})
+            return render_to_response('ratedFilms.html', {'usuario':usuario},context_instance=RequestContext(request))
     else:
         form=UserForm()
     return render_to_response('search_user.html', {'form':form }, context_instance=RequestContext(request))
@@ -393,6 +392,7 @@ def recommendedFilms2(request):
             puntuaciones = Rating.objects.filter(user=usuario)
             peliculas=[]
             for p in puntuaciones:
+                print Film.objects.get(movieTitle=p.film)
                 pelicula= Film.objects.get(movieTitle=p.film)
                 peliculas.append(pelicula)
                 generos_p = pelicula.genres.all()
@@ -423,7 +423,6 @@ def recommendedFilms2(request):
                     results = searcher.search(query)
                     for r in results:
                         synopsis.append(r['sinopsis'].encode('utf-8'))
-                        print synopsis
             for i in range(len(items)-1):
                 final.append("Title: "+items[i].movieTitle+" -----   Synopsis: "+synopsis[i].decode('utf-8'))
             return render_to_response('recommendationItemsByUser.html', {'user': usuario, 'final': final}, context_instance=RequestContext(request))
