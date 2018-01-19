@@ -376,7 +376,7 @@ def recommendedFilms(request):
             
             return render_to_response('recommendationItemsByFilm.html', {'peli': peli, 'items': items}, context_instance=RequestContext(request))
     form = RSFilmForm()
-    return render_to_response('search_user.html', {'form': form}, context_instance=RequestContext(request))
+    return render_to_response('search_film.html', {'form': form}, context_instance=RequestContext(request))
 
 def recommendedFilms2(request):
     if request.method=='GET':
@@ -426,7 +426,7 @@ def recommendedFilms2(request):
             for i in range(len(items)-1):
                 final.append("Title: "+items[i].movieTitle+" -----   Synopsis: "+synopsis[i].decode('utf-8'))
             return render_to_response('recommendationItemsByUser.html', {'user': usuario, 'final': final}, context_instance=RequestContext(request))
-    
+        
     form = UserForm()
     return render_to_response('search_user.html', {'form': form}, context_instance=RequestContext(request))
 
